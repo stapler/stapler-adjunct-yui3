@@ -86,7 +86,7 @@ def yuiProject(name,dep,config) {
     project(name) {
         jar {
             from("../yui/build",config)
-            into "org/kohsuke/stapler/yui3/"
+            into "yui3/"
             includeEmptyDirs = false
         }
 
