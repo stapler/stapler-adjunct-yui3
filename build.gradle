@@ -1,0 +1,122 @@
+/*
+    This script expects you to have YUI3 expanded in "./yui"
+*/
+allprojects {
+    apply plugin:"java"
+    apply plugin:"maven"
+    apply plugin:"signing"
+
+    group="org.kohsuke.stapler"
+    version="3.4.1";
+    description="YUI3";
+
+    repositories {
+        mavenCentral()
+    }
+
+    signing {
+        sign configurations.archives
+    }
+
+    // dummy source/javadoc jars to make central happy
+    task emptySourceJar(type:Jar) {
+        classifier = "sources"
+    }
+    task emptyJavadocJar(type:Jar) {
+        classifier = "javadoc"
+    }
+    artifacts {
+        archives (emptySourceJar) {
+            classifier = "sources";
+        }
+        archives (emptyJavadocJar) {
+            classifier = "javadoc"
+        }
+    }
+
+    p = project
+
+    customizePom = {
+        pom {
+            artifactId = "yui3-${p.name}"
+            name = "YUI3 ${p.name}"
+            project {
+                description = p.description
+                url = "http://kohsuke.org/";
+                licenses {
+                    license {
+                        name = "BSD License"
+                        url = "http://yuilibrary.com/license/"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "kohsuke"
+                    }
+                }
+                scm {
+                    // url = "http://github.com/kohsuke/package-renamed-asm";
+                }
+            }
+        }
+    }
+    install.repositories.mavenInstaller(customizePom)
+    uploadArchives.repositories.mavenDeployer(customizePom)
+
+    uploadArchives.repositories.mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
+        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/", id:"sonatype-nexus-staging") {
+            authentication(userName:"kohsuke", password:System.getProperty("password"))
+        }
+    }
+}
+
+// list up *.js that has corresponding "*-min.js"
+def regularJs = [] as Set
+def yuiDir = new File("yui/build")
+yuiDir.eachFileRecurse { f ->
+    if (f.name.endsWith(".js")) {
+        g = new File(f.path[0..-4]+"-min.js")
+        if (g.exists())
+            regularJs << f.path.substring(yuiDir.path.length()+1)
+    }
+}
+
+def yuiProject(name,dep,config) {
+    project(name) {
+        jar {
+            from("../yui/build",config)
+            into "org/kohsuke/stapler/yui3/"
+            includeEmptyDirs = false
+        }
+
+        dep.each { d ->
+            dependsOn ":${d}"
+            dependencies {
+                compile "${group}:yui3-${d}:${version}"
+            }
+        }
+    }
+}
+
+// minified js and other base assets
+yuiProject(":base",[]) {
+    include "**/*";
+    exclude "**/*-debug.js";
+    exclude "**/skins/";
+    exclude regularJs;
+}
+
+// debug version of scripts
+yuiProject(":debug",["base"]) {
+    include  "**/*-debug.js";
+}
+
+yuiProject(":skin-sam",["base"]) {
+    include  "**/skins/sam/";
+}
+
+yuiProject(":skin-night",["base"]) {
+    include  "**/skins/night/";
+}
+

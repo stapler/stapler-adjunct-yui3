@@ -1,5 +1,5 @@
 #!/bin/bash
-for f in $(find . -name 'src/main/resources/*.js');
+for f in $(find src/main/resources -name '*.js');
 do
   # echo $f
   
