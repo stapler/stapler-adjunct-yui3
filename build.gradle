@@ -1,7 +1,7 @@
 /*
     This script expects you to have YUI3 expanded in "./yui"
 */
-allprojects {
+subprojects {
     apply plugin:"java"
     apply plugin:"maven"
     apply plugin:"signing"
