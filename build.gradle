@@ -65,7 +65,7 @@ subprojects {
 
     uploadArchives.repositories.mavenDeployer {
         beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
-        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/", id:"sonatype-nexus-staging") {
+        repository(url: "http://maven.jenkins-ci.org:8081/content/repositories/releases/", id:"maven.jenkins-ci.org") {
             authentication(userName:"kohsuke", password:System.getProperty("password"))
         }
     }
